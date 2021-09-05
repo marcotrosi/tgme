@@ -1,0 +1,79 @@
+#!/bin/bash
+
+if [[ "${#}" -eq 0 ]]
+then
+   echo 'NAME:'
+   echo '   tgme - send messages to your Telegram account'
+   echo ''
+   echo 'SYNOPSIS:'
+   echo '   tgme "TEXT"'
+   echo '   tgme "TITLE" "TEXT"'
+   echo '   tgme "TITLE" "SUBTITLE" "TEXT"'
+   echo ''
+   echo 'CONFIGURATION:'
+   echo '   The configuration shall consist of two files.'
+   echo '   One file named "token" shall contain the Telegram API token of your bot.'
+   echo '   A second file named "chatid" that shall contain the Telegram chat ID in which the bot is added.'
+   echo '   Use botfather within Telegram to create a bot and get a token for it.'
+   echo '   Add the bot and send a dummy message, then put "https://api.telegram.org/bot<YourBOTToken>/getUpdates"'
+   echo '   in your browser to find the chat_id.'
+   exit 0
+fi
+
+if [[ "${#}" -gt 3 ]]
+then
+   echo "tgme error: too many arguments"
+   exit 3
+fi
+
+# CfgPath="${HOME}/.tgme"
+CfgPath="${HOME}/.config/tgme"
+TokenFile="${CfgPath}/token"
+ChatIDFile="${CfgPath}/chatid"
+Token="$(cat "${TokenFile}")"
+ChatID="$(cat "${ChatIDFile}")"
+Api="https://api.telegram.org/bot${Token}"
+
+if [[ "${#}" -eq 1 ]] # text
+then
+   Message="${1}"
+fi
+
+if [[ "${#}" -eq 2 ]] # title and text
+then
+   Title="<b>${1}</b>"
+   Text="${2}"
+   Message="${Title}\n\n${Text}"
+fi
+
+if [[ "${#}" -eq 3 ]] # title, subtitle and text
+then
+   Title="<b>${1}</b>"
+   Subtitle="<i>${2}</i>"
+   Text="${3}"
+   Message="${Title}\n${Subtitle}\n\n${Text}"
+fi
+
+Data="{\"chat_id\":\"${ChatID}\", \"text\":\"${Message}\", \"parse_mode\":\"HTML\"}"
+Call="curl -s -X POST -H 'Content-Type: application/json' -d '${Data}' ${Api}/sendMessage"
+Response=$(eval "${Call}")
+
+if [ "${?}" -ne 0 ]
+then
+   echo "tgme error: something went wrong"
+   exit 1
+fi
+
+# if [ "$(echo "${Response}" | dasel select -p json 'ok')" != 'true' ]
+# if [ "$(echo "${Response}" | jq '.ok')" != 'true' ]
+if [ "$(echo "${Response}" | grep -o '"ok":\(true\|false\)')" != '"ok":true' ]
+then
+   echo "tgme error: could not send message"
+   echo "Call:"
+   echo "    ${Call}"
+   echo "Response:"
+   echo "    ${Response}"
+   exit 2
+fi
+
+exit 0
