@@ -24,4 +24,6 @@ And this is where Telegram comes into the game, because I'm on Telegram anyway t
 ![receiving a message](receive.png)
 
 ## Disclaimer
-Use at own risk and feel free to adapt the code to your needs.
+This is a public repository but a private tool that I only share just in case someone needs a starting point.
+Get inspired and adapt the code to your needs. USE AT OWN RISK.
+
